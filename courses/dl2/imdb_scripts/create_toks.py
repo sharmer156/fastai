@@ -20,12 +20,11 @@ def get_texts(df, n_lbls, lang='en'):
     if len(df.columns) == 1:
         labels = []
         texts = f'\n{BOS} {FLD} 1 ' + df[0].astype(str)
-        texts = texts.apply(fixup).values.astype(str)
     else:
         labels = df.iloc[:,range(n_lbls)].values.astype(np.int64)
         texts = f'\n{BOS} {FLD} 1 ' + df[n_lbls].astype(str)
-        for i in range(n_lbls+1, len(df.columns)): texts += f' {FLD} {i-n_lbls} ' + df[i].astype(str)
-        texts = texts.apply(fixup).values.astype(str)
+        for i in range(n_lbls+1, len(df.columns)): texts += f' {FLD} {i-n_lbls+1} ' + df[i].astype(str)
+    texts = list(texts.apply(fixup).values)
 
     tok = Tokenizer(lang=lang).proc_all_mp(partition_by_cores(texts), lang=lang)
     return tok, list(labels)
@@ -56,7 +55,7 @@ def create_toks(dir_path, chunksize=24000, n_lbls=1, lang='en'):
     df_trn = pd.read_csv(dir_path / 'train.csv', header=None, chunksize=chunksize)
     df_val = pd.read_csv(dir_path / 'val.csv', header=None, chunksize=chunksize)
 
-    tmp_path = dir_path.joinpath('tmp')
+    tmp_path = dir_path / 'tmp'
     tmp_path.mkdir(exist_ok=True)
     tok_trn, trn_labels = get_all(df_trn, n_lbls, lang=lang)
     tok_val, val_labels = get_all(df_val, n_lbls, lang=lang)
